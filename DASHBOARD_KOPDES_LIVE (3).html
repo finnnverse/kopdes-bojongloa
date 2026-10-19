@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Kopdes Bojongloa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--merah:#C71E1E;--merah-tua:#9e1515;--merah-muda:#fdecec;--abu:#5b5b5b;
+--bg:#faf9f9;--garis:#ececec;--hijau:#0a7d3a;--hijau-muda:#e6f6ec;
+--biru:#1a56db;--biru-muda:#e8f0fe;--oranye:#b26a00;--oranye-muda:#fff3e0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#1c1c1c;font-family:'Inter',sans-serif;
+font-size:14px;min-height:100vh;padding-bottom:40px;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}button{cursor:pointer}
+.app{max-width:1250px;margin:auto;padding:16px}
+.hidden{display:none!important}
+
+/* HEADER */
+.headbar{background:linear-gradient(135deg,var(--merah),var(--merah-tua));color:#fff;
+padding:22px 18px 18px;border-radius:0 0 18px 18px;position:relative;overflow:hidden}
+.headbar::after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;
+right:-60px;top:-100px;background:#fff;opacity:.08}
+.hb-in{display:flex;align-items:center;gap:12px;position:relative;z-index:2}
+.logo{width:46px;height:46px;border-radius:13px;background:#fff;color:var(--merah);
+display:grid;place-items:center;font-size:23px;font-weight:800;flex:0 0 auto;
+font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 14px #00000022}
+.headbar h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;
+margin:0;letter-spacing:-.3px}
+.headbar p{margin:4px 0 0;font-size:12.5px;opacity:.93}
+
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+margin:14px 0}
+.badge{border:1px solid #e8b4b4;color:var(--merah);background:#fdf3f3;border-radius:999px;
+padding:7px 12px;font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+
+.card,.panel,.stat{background:#fff;border:1px solid var(--garis);border-radius:16px;
+box-shadow:0 2px 10px rgba(0,0,0,.05)}
+.panel{padding:17px;min-width:0}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
+flex-wrap:wrap;margin-bottom:14px}
+.panel h2{font-size:15px;margin:0;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800}
+.sub{font-size:11.5px;color:#999;margin-top:4px}
+
+/* KPI */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:16px}
+.stat{padding:17px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;
+right:-34px;top:-40px;background:var(--accent,var(--merah));opacity:.07}
+.stat .lb{font-size:11.5px;color:var(--abu);font-weight:700;text-transform:uppercase;
+letter-spacing:.04em}
+.stat .vl{font-size:clamp(19px,2.1vw,27px);font-weight:800;letter-spacing:-.8px;margin:11px 0 6px;
+font-family:'Plus Jakarta Sans',sans-serif;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.stat .ft{font-size:11px;color:#999}
+.c-red{color:var(--merah)}.c-green{color:var(--hijau)}.c-blue{color:var(--biru)}.c-orange{color:var(--oranye)}
+
+/* FILTER */
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{border:1px solid #ddd;background:#fff;color:#444;border-radius:999px;
+padding:9px 15px;font-weight:700;font-size:12.5px;min-height:40px}
+.chip.on{background:var(--merah);border-color:var(--merah);color:#fff}
+.btn{border:1px solid #ddd;color:#444;background:#fff;border-radius:10px;padding:10px 14px;
+font-weight:700;font-size:12.5px;min-height:40px}
+.btn:hover{filter:brightness(.97)}
+.btn.primary{background:var(--merah);border-color:var(--merah);color:#fff}
+.btn.sm{padding:8px 12px;font-size:11.5px;min-height:36px}
+
+/* LOCK */
+.lock{max-width:390px;margin:60px auto;text-align:center;padding:0 16px}
+.lock .box{padding:28px 22px}
+.lock h2{font-size:19px;margin:12px 0 5px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800}
+.lock p{color:#999;font-size:12.5px;margin:0 0 18px}
+.lock input{width:100%;padding:14px;font-size:24px;text-align:center;letter-spacing:9px;
+background:#fafafa;border:1px solid #ddd;border-radius:12px;outline:none;font-weight:800}
+.lock input:focus{border-color:var(--merah)}
+.lock button{margin-top:14px;width:100%;padding:14px;background:var(--merah);color:#fff;
+border:0;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer}
+.err{color:var(--merah);font-size:12.5px;margin-top:10px;min-height:16px}
+
+/* LAYOUT */
+.grid2{display:grid;grid-template-columns:1.4fr .6fr;gap:15px;margin-bottom:15px}
+.chart-box{height:270px;position:relative}
+.pill{font-size:10px;border-radius:999px;padding:5px 9px;background:var(--merah-muda);
+color:var(--merah);font-weight:800;white-space:nowrap}
+
+/* TABEL */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;white-space:nowrap;font-size:12.5px;min-width:680px}
+th{text-align:left;color:var(--abu);font-size:10px;text-transform:uppercase;letter-spacing:.6px;
+font-weight:800;padding:11px 12px;border-bottom:1px solid var(--garis);background:#fcfbfb}
+td{padding:11px 12px;border-bottom:1px solid #f4f4f4}
+tbody tr:hover{background:#fdf8f8}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.store{font-weight:700}
+.tag{display:inline-block;padding:4px 9px;border-radius:7px;font-size:10.5px;font-weight:800}
+.t-qris{background:var(--biru-muda);color:var(--biru)}
+.t-tunai{background:var(--hijau-muda);color:var(--hijau)}
+.t-none{background:#efefef;color:#666}
+.t-habis{background:var(--merah-muda);color:var(--merah)}
+.t-tipis{background:var(--oranye-muda);color:var(--oranye)}
+.t-ada{background:var(--hijau-muda);color:var(--hijau)}
+.t-na{background:#efefef;color:#666}
+
+/* BAR */
+.barlist{display:flex;flex-direction:column;gap:12px}
+.barrow .bl{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;
+font-size:12.5px;font-weight:600}
+.track{height:8px;background:#f0f0f0;border-radius:99px;overflow:hidden}
+.fill{height:100%;border-radius:99px}
+.empty{padding:30px;text-align:center;color:#aaa}
+.pager{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
+.notice{border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.55;margin-bottom:14px}
+.n-warn{background:var(--oranye-muda);border:1px solid #f0ddbb;color:#7a5200}
+.n-bad{background:var(--merah-muda);border:1px solid #f1c9c9;color:#8a2424}
+.n-info{background:var(--biru-muda);border:1px solid #cfe0fb;color:#12408f}
+footer{text-align:center;color:#bbb;font-size:11px;padding:24px 0 8px;line-height:1.7}
+
+
+/* TABS */
+.tabs{display:flex;gap:8px;overflow-x:auto;border-bottom:1px solid var(--garis);
+margin:0 0 16px;padding-bottom:0;-webkit-overflow-scrolling:touch}
+.tab{border:0;background:transparent;color:#888;padding:13px 16px;border-bottom:2.5px solid transparent;
+white-space:nowrap;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.tab:hover{color:var(--merah)}
+.tab.on{color:var(--merah);border-color:var(--merah)}
+.tcount{display:inline-block;min-width:20px;padding:2px 7px;border-radius:999px;background:#efefef;
+color:#666;font-size:10.5px;font-weight:800;text-align:center}
+.tcount.warn{background:var(--merah-muda);color:var(--merah)}
+.view{animation:masuk .18s ease-out}
+@keyframes masuk{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+@media(max-width:900px){
+  .grid2{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .app{padding:11px}
+  .headbar h1{font-size:17px}
+  .logo{width:40px;height:40px;font-size:20px}
+  .stat{padding:13px}.stat .vl{font-size:19px}
+  .panel{padding:13px}
+  .chip{padding:8px 12px;font-size:12px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app" id="app">
+
+  <div class="headbar">
+    <div class="hb-in">
+      <div class="logo">K</div>
+      <div>
+        <h1>Dashboard Kopdes Bojongloa</h1>
+        <p>Omset · Tunai · QRIS — KDKMP Bojongloa, Rancaekek</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="top">
+    <span class="badge" id="sumber">memuat data…</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn sm" id="btnTxt">⬇ Unduh TXT</button>
+      <button class="btn sm primary" id="btnXls">⬇ Unduh Excel</button>
+    </div>
+  </div>
+
+  <div class="notice n-warn" id="noticeMetode">
+    <b>Soal metode bayar:</b> transaksi lama belum punya kolom Metode, jadi masuk hitungan
+    <b>"Tanpa keterangan"</b>. Yang baru (setelah bot penjualan dipasang) otomatis terpisah Tunai/QRIS.
+  </div>
+
+  <div class="filters" id="filters"></div>
+  <div class="filters hidden" id="filtersCustom" style="margin-top:-8px">
+    <input type="date" id="dari" class="btn" style="padding:9px 11px">
+    <span style="color:var(--abu);align-self:center;font-size:12px">s/d</span>
+    <input type="date" id="sampai" class="btn" style="padding:9px 11px">
+    <button class="btn primary sm" id="btnTerap">Terapkan</button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-v="ringkasan">📊 Ringkasan</button>
+    <button class="tab" data-v="transaksi">🧾 Detail Transaksi</button>
+    <button class="tab" data-v="stok">📦 Monitoring Stok <span class="tcount" id="countStok">—</span></button>
+  </nav>
+
+  <div class="notice n-warn hidden" id="noticeKosong"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <section class="view" id="v-ringkasan">
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Omzet harian</h2><div class="sub" id="subChart">—</div></div>
+      </div>
+      <div class="chart-box"><canvas id="chart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Rincian pembayaran</h2><div class="sub">Tunai vs QRIS</div></div>
+      </div>
+      <div class="barlist" id="barBayar"></div>
+    </div>
+  </div>
+
+  </section>
+
+  <section class="view hidden" id="v-transaksi">
+  <div class="panel" style="margin-bottom:15px">
+    <div class="panel-head">
+      <div><h2>Detail transaksi</h2><div class="sub" id="subTrx">—</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="cari" type="search" class="btn" placeholder="Cari barang / no transaksi…"
+               style="min-width:210px;padding:9px 12px;font-weight:500">
+        <select id="fMetode" class="btn" style="padding:9px 12px">
+          <option value="">Semua metode</option>
+          <option value="QRIS">QRIS</option>
+          <option value="Tunai">Tunai</option>
+          <option value="-">Tanpa keterangan</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Tanggal</th><th>Jam</th><th>No Transaksi</th><th>Nama Barang</th>
+          <th class="num">Jumlah</th><th class="num">Harga</th><th class="num">Subtotal</th><th>Metode</th>
+        </tr></thead>
+        <tbody id="tbTrx"></tbody>
+      </table>
+    </div>
+    <div class="pager" id="pager"></div>
+  </div>
+
+  </section>
+
+  <section class="view hidden" id="v-stok">
+  <div class="panel">
+    <div class="panel-head">
+      <div><h2>Monitoring stok</h2><div class="sub">Baca-saja — koreksi dilakukan di Google Sheets</div></div>
+      <span class="pill" id="pillStok">—</span>
+    </div>
+    <div class="notice n-bad" id="noticeStok">—</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Nama Barang</th><th class="num">Harga</th>
+          <th class="num">Stok</th><th>Status</th><th>Masalah</th></tr></thead>
+        <tbody id="tbStok"></tbody>
+      </table>
+    </div>
+  </div>
+
+  </section>
+
+  <footer>
+    Dashboard Kopdes Bojongloa · sumber: Google Sheets (baca-saja)<br>
+    Omzet dihitung dari harga Master Data saat ini
+  </footer>
+</div>
+
+<script>
+/* =====================================================================
+   Dashboard Kopdes Bojongloa — Omset / Tunai / QRIS
+   Data: Google Sheets via JSONP (baca-saja) + mode CONTOH buat pratinjau
+   ===================================================================== */
+
+var SS = '11LEIauy1D72_cALH3yHRBeYP1kBhrtAewrldrCIxzno';
+var TAB_MASTER = { nama: 'Master data', wajib: ['NAMA BARANG'] };
+var TAB_JUAL = [
+  { nama: 'Penjualan', wajib: ['No Transaksi', 'Nama Barang'] },
+  { nama: 'Penjualan 2026-09', wajib: ['No Transaksi', 'Nama Barang'] }
+];
+var SESI_JAM = 8;
+var CACHE_KEY = 'kb_cache_v1';
+var CACHE_MENIT = 10;
+
+var KATEGORI = [
+  ['Minuman', ['aqua','aquviva','teh','pucuk','pocari','fanta','sprite','coca','le minerale','ichi','ale ale','buavita','milk','milo','energen','kopi','coffee','kapal api','good day','luwak','indocafe','kopiko','floridina','susu','sariwangi','vit','frissian','frisian']],
+  ['Mi Instan', ['indomie','mie sedaap','pop mie','sarimi','supermi','mie ','mi gelas','bihun']],
+  ['Biskuit & Wafer', ['astor','beng beng','oreo','roma','nabati','gery','chocolatos','super star','good time','taro','malkist','chiki']],
+  ['Permen & Cokelat', ['permen','coklat','choki','silverqueen','relaxa']],
+  ['Sembako', ['beras','gula','minyak','tepung','garam','telur','terigu','sarden','sosis','kornet','blue band','margarin','kara','santan','gas lpg','pupuk']],
+  ['Bumbu & Bahan Masak', ['royco','masako','bango','kecap','sambal','ladaku','merica','bumbu racik','saori','sasa','ajinomoto','kaldu','sedap']],
+  ['Sabun & Deterjen', ['rinso','daia','downy','molto','kispray','so klin','soklin','ekonomi','pewangi','sunlight','attack','bayclin']],
+  ['Perawatan Tubuh', ['shampo','clear','lifebuoy','pantene','head','sunsilk','nivea','pepsodent','ciptadent','close up','formula','sikat gigi','charm','laurier','softex','citra','dettol','giv','nuvo','lotion']],
+  ['Produk Rumah Tangga', ['baygon','autan','obat nyamuk','tisu','korek','baterai','sapu','piring','ember','lampu']]
+];
+
+var S = {
+  master: [], rows: [], mode: 'minggu', dari: '', sampai: '',
+  halaman: 1, perHal: 25, cari: '', fMetode: '', sumber: 'live', sudahMasuk: false
+};
+
+/* ---------- util ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
+function rp(n){ return 'Rp ' + Math.round(Number(n)||0).toLocaleString('id-ID'); }
+function rpShort(n){ n = Math.round(Number(n)||0);
+  if(n >= 1000000) return 'Rp ' + (n/1000000).toFixed(1).replace('.',',') + ' jt';
+  if(n >= 1000) return 'Rp ' + Math.round(n/1000) + 'rb';
+  return 'Rp ' + n; }
+function ang(n){ return (Number(n)||0).toLocaleString('id-ID'); }
+function persen(a,b){ return b > 0 ? Math.round(a/b*100) : 0; }
+function hariIni(){ return new Date(Date.now()+7*3600000).toISOString().slice(0,10); }
+function geser(iso,n){ var d=new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function keIso(dmy){ var m=String(dmy||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m) return ''; return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); }
+function kategoriProduk(nama){
+  var n = String(nama||'').toLowerCase();
+  for(var i=0;i<KATEGORI.length;i++){ var k=KATEGORI[i][1];
+    for(var j=0;j<k.length;j++){ if(n.indexOf(k[j])>-1) return KATEGORI[i][0]; } }
+  return 'Lainnya';
+}
+function statusStok(v){
+  if(v===null||v===undefined||isNaN(v)) return {kode:'na', teks:'Tidak tersedia'};
+  if(v<=0) return {kode:'habis', teks:'Habis'};
+  if(v<=5) return {kode:'tipis', teks:'Stok Menipis'};
+  return {kode:'ada', teks:'Tersedia'};
+}
+function masalahStok(m){
+  if(m.stok===null||isNaN(m.stok)) return 'Stok kosong / tidak valid';
+  if(m.stok<0) return 'Stok negatif (' + m.stok + ')';
+  if(m.stok===0) return 'Stok nol';
+  return '';
+}
+
+/* ---------- ambil data (JSONP) ---------- */
+function jsonp(sheet){
+  return new Promise(function(res, rej){
+    var cb='cb_'+Math.random().toString(36).slice(2);
+    var sc=document.createElement('script');
+    var to=setTimeout(function(){ bersih(); rej(new Error('timeout')); }, 25000);
+    function bersih(){ clearTimeout(to);
+      try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
+      if(sc.parentNode) sc.parentNode.removeChild(sc); }
+    window[cb]=function(d){ bersih(); res(d); };
+    sc.onerror=function(){ bersih(); rej(new Error('gagal')); };
+    sc.src='https://docs.google.com/spreadsheets/d/'+SS+'/gviz/tq?sheet='+
+           encodeURIComponent(sheet)+'&tqx=responseHandler:'+cb;
+    document.head.appendChild(sc);
+  });
+}
+function cols(d){ return (d&&d.table&&d.table.cols?d.table.cols:[]).map(function(c){return (c.label||'').trim();}); }
+function punya(c, wajib){ return wajib.every(function(w){ return c.indexOf(w)>-1; }); }
+function teks(c, i){ if(!c||!c[i]) return ''; var v=c[i]; return String(v.f!=null?v.f:(v.v!=null?v.v:'')).trim(); }
+
+async function muatMasterLive(){
+  var d = await jsonp(TAB_MASTER.nama);
+  if(!punya(cols(d), TAB_MASTER.wajib)) throw new Error('tab Master tidak dikenali');
+  return (d.table.rows||[]).map(function(r){
+    var c=r.c||[];
+    var h=c[1]&&c[1].v!=null?Number(c[1].v):null;
+    var s=c[2]&&c[2].v!=null?Number(c[2].v):null;
+    return { nama: teks(c,0), harga: (h===null||isNaN(h))?null:h, stok: (s===null||isNaN(s))?null:s };
+  }).filter(function(x){ return x.nama; });
+}
+async function muatJualLive(){
+  var semua=[];
+  for(var i=0;i<TAB_JUAL.length;i++){
+    var t=TAB_JUAL[i];
+    try{
+      var d=await jsonp(t.nama);
+      if(!punya(cols(d), t.wajib)) continue;
+      (d.table.rows||[]).forEach(function(r){
+        var c=r.c||[];
+        var no=teks(c,0), iso=keIso(teks(c,1)), jam=teks(c,2), br=teks(c,3);
+        var jl=c[4]?Number(c[4].v):0;
+        var mt=teks(c,5);
+        if(!br||!iso||!(jl>0)) return;
+        semua.push({ no:no, iso:iso, jam:jam, barang:br, jumlah:jl,
+                     metode: (mt? (mt.toUpperCase().indexOf('QRIS')>-1?'QRIS':'Tunai') : '') , tab:t.nama });
+      });
+    }catch(e){}
+  }
+  return semua;
+}
+
+/* ---------- harga & hitung ---------- */
+function hargaPeta(){ var m={}; S.master.forEach(function(x){ m[x.nama.toUpperCase()]=x.harga; }); return m; }
+function rentang(){
+  var ini = hariIni();
+  if(S.mode==='hari') return {a:ini,b:ini,label:'Hari Ini'};
+  if(S.mode==='kemarin'){ var k=geser(ini,-1); return {a:k,b:k,label:'Kemarin'}; }
+  if(S.mode==='minggu'){
+    // "Minggu Ini" = 7 HARI TERAKHIR (bukan Senin-hari ini), biar gak pernah
+    // kosong waktu minggu baru mulai. Patokannya tanggal data terakhir.
+    var patok = ini;
+    try{ var akhir = dataTerakhir(); if(akhir && akhir < ini) patok = akhir; }catch(e){}
+    return {a:geser(patok,-6), b:patok, label:'Minggu Ini'};
+  }
+  if(S.mode==='bulan') return {a:ini.slice(0,8)+'01',b:ini,label:'Bulan Ini'};
+  if(S.dari && S.sampai) return {a:S.dari,b:S.sampai,label:'Rentang ' + S.dari + ' s/d ' + S.sampai};
+  return {a:ini,b:ini,label:'Hari Ini'};
+}
+function barisPeriode(){
+  var p = rentang();
+  return S.rows.filter(function(r){ return r.iso>=p.a && r.iso<=p.b; });
+}
+function hitung(list){
+  var hp = hargaPeta(), perTrx = {}, perHari = {}, perProduk = {}, unit = 0, tanpaHarga = 0;
+  list.forEach(function(r){
+    var h = hp[String(r.barang).toUpperCase()];
+    var okH = (typeof h === 'number' && h >= 0);
+    var nilai = okH ? h * r.jumlah : 0;
+    if(!okH) tanpaHarga++;
+    unit += r.jumlah;
+    if(!perTrx[r.no]) perTrx[r.no] = { nilai:0, metode:'', unit:0, iso:r.iso, ada:false };
+    if(okH){ perTrx[r.no].nilai += nilai; perTrx[r.no].ada = true; }
+    perTrx[r.no].unit += r.jumlah;
+    if(!perTrx[r.no].metode && r.metode) perTrx[r.no].metode = r.metode;
+
+    if(!perHari[r.iso]) perHari[r.iso] = { tunai:0, qris:0, tanpa:0, unit:0, trx:0 };
+    perHari[r.iso].unit += r.jumlah;
+    if(okH){
+      if(r.metode === 'QRIS') perHari[r.iso].qris += nilai;
+      else if(r.metode === 'Tunai') perHari[r.iso].tunai += nilai;
+      else perHari[r.iso].tanpa += nilai;
+    }
+
+    var kk = String(r.barang).toUpperCase();
+    if(!perProduk[kk]) perProduk[kk] = { nama:r.barang, unit:0, trx:{}, nilai:0, ada:false };
+    perProduk[kk].unit += r.jumlah;
+    perProduk[kk].trx[r.no] = 1;
+    if(okH){ perProduk[kk].nilai += nilai; perProduk[kk].ada = true; }
+  });
+
+  var t = { tunai:0, qris:0, tanpa:0, nTunai:0, nQris:0, nTanpa:0, total:0, nTrx:0 };
+  Object.keys(perTrx).forEach(function(k){
+    var p = perTrx[k];
+    if(p.metode === 'QRIS'){ t.qris += p.nilai; t.nQris++; }
+    else if(p.metode === 'Tunai'){ t.tunai += p.nilai; t.nTunai++; }
+    else { t.tanpa += p.nilai; t.nTanpa++; }
+    t.total += p.nilai; t.nTrx++;
+  });
+  Object.keys(perHari).forEach(function(dt){ perHari[dt].trx = 0; });
+  Object.keys(perTrx).forEach(function(k){ if(perHari[perTrx[k].iso]) perHari[perTrx[k].iso].trx++; });
+
+  var produk = Object.keys(perProduk).map(function(k){
+    var p = perProduk[k];
+    return { nama:p.nama, unit:p.unit, trx:Object.keys(p.trx).length, nilai:p.nilai, ada:p.ada };
+  });
+
+  return { list:list, unit:unit, tanpaHarga:tanpaHarga, perHari:perHari, produk:produk, total:t };
+}
+</script>
+
+<script>
+/* ================== RENDER + EKSPOR + PIN ================== */
+var CH1 = null, CH2 = null;
+
+function renderFilters(){
+  var def = [['hari','Hari Ini'],['kemarin','Kemarin'],['minggu','Minggu Ini'],
+             ['bulan','Bulan Ini'],['custom','Rentang Tanggal']];
+  var h = def.map(function(d){
+    return '<button class="chip' + (S.mode===d[0]?' on':'') + '" data-m="' + d[0] + '">' + d[1] + '</button>';
+  }).join('');
+  $('filters').innerHTML = h;
+  [].forEach.call($('filters').querySelectorAll('[data-m]'), function(b){
+    b.onclick = function(){
+      S.mode = b.dataset.m;
+      $('filtersCustom').classList.toggle('hidden', S.mode!=='custom');
+      if(S.mode==='custom' && !S.dari){ S.dari = hariIni().slice(0,8)+'01'; S.sampai = hariIni(); }
+      if(S.mode==='custom'){ $('dari').value=S.dari; $('sampai').value=S.sampai; }
+      renderFilters(); renderAll();
+    };
+  });
+}
+
+function renderStats(t){
+  var k = [];
+  k.push(['Total Omset', rp(t.total), 'c-red', 'Tunai + QRIS + tanpa keterangan']);
+  k.push(['Tunai', rp(t.tunai), 'c-green', t.nTunai + ' transaksi · ' + persen(t.tunai,t.total) + '%']);
+  k.push(['QRIS', rp(t.qris), 'c-blue', t.nQris + ' transaksi · ' + persen(t.qris,t.total) + '%']);
+  k.push(['Jumlah Transaksi', ang(t.nTrx), '', ang(t.unit) + ' barang terjual']);
+  if(t.nTanpa > 0) k.push(['Tanpa keterangan', rp(t.tanpa), 'c-orange', t.nTanpa + ' transaksi lama']);
+  $('stats').innerHTML = k.map(function(x){
+    return '<div class="stat" style="--accent:' + (x[2]==='c-blue'?'#1a56db':x[2]==='c-green'?'#0a7d3a':x[2]==='c-orange'?'#b26a00':'#C71E1E') + '">' +
+      '<div class="lb">' + x[0] + '</div><div class="vl ' + x[2] + '">' + x[1] + '</div>' +
+      '<div class="ft">' + x[3] + '</div></div>';
+  }).join('');
+}
+
+function renderCharts(h, t){
+  var tgl = Object.keys(h.perHari).sort();
+  var lab = tgl.map(function(x){ var p=x.split('-'); return p[2]+'/'+p[1]; });
+  var dT = tgl.map(function(x){ return h.perHari[x].tunai; });
+  var dQ = tgl.map(function(x){ return h.perHari[x].qris; });
+  var dN = tgl.map(function(x){ return h.perHari[x].tanpa; });
+
+  if(CH1){ CH1.destroy(); CH1=null; }
+  CH1 = new Chart($('chart'), {
+    type:'bar',
+    data:{ labels:lab, datasets:[
+      { label:'Tunai', data:dT, backgroundColor:'#0a7d3a', borderRadius:5, maxBarThickness:34 },
+      { label:'QRIS',  data:dQ, backgroundColor:'#1a56db', borderRadius:5, maxBarThickness:34 },
+      { label:'Tanpa keterangan', data:dN, backgroundColor:'#d9d9d9', borderRadius:5, maxBarThickness:34 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ boxWidth:12, font:{ size:11 } } },
+        tooltip:{ callbacks:{ label:function(c){ return c.dataset.label + ': ' + rp(c.parsed.y); } } } },
+      scales:{ x:{ stacked:true, grid:{ display:false } },
+        y:{ stacked:true, beginAtZero:true, ticks:{ callback:function(v){ return rpShort(v); } } } } }
+  });
+  $('subChart').textContent = tgl.length + ' hari · total ' + rp(t.total);
+
+  // donut + baris rincian
+  var bagian = [];
+  if(t.tunai>0) bagian.push(['Tunai', t.tunai, '#0a7d3a', t.nTunai]);
+  if(t.qris>0) bagian.push(['QRIS', t.qris, '#1a56db', t.nQris]);
+  if(t.tanpa>0) bagian.push(['Tanpa keterangan', t.tanpa, '#d9d9d9', t.nTanpa]);
+
+  var html = '<div class="chart-box" style="height:180px"><canvas id="donut"></canvas></div>';
+  bagian.forEach(function(b){
+    html += '<div class="barrow"><div class="bl"><span>' + b[0] + ' <b>' + persen(b[1],t.total) + '%</b></span>' +
+      '<strong>' + rp(b[1]) + '</strong></div>' +
+      '<div class="track"><div class="fill" style="width:' + persen(b[1],t.total) + '%;background:' + b[2] + '"></div></div>' +
+      '<div class="sub">' + b[3] + ' transaksi</div></div>';
+  });
+  $('barBayar').innerHTML = html;
+
+  if(CH2){ CH2.destroy(); CH2=null; }
+  var el = $('donut');
+  if(el && bagian.length){
+    CH2 = new Chart(el, {
+      type:'doughnut',
+      data:{ labels:bagian.map(function(b){return b[0];}),
+        datasets:[{ data:bagian.map(function(b){return b[1];}),
+          backgroundColor:bagian.map(function(b){return b[2];}), borderWidth:0 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'62%',
+        plugins:{ legend:{ display:false },
+          tooltip:{ callbacks:{ label:function(c){ return c.label + ': ' + rp(c.parsed); } } } } }
+    });
+  }
+}
+
+function renderTrx(h){
+  var hp = hargaPeta();
+  var list = h.list.slice().sort(function(a,b){ return (b.iso+b.jam).localeCompare(a.iso+a.jam); });
+  var q = S.cari.trim().toLowerCase();
+  list = list.filter(function(r){
+    if(S.fMetode && (r.metode || '-') !== S.fMetode) return false;
+    if(q && !(String(r.barang).toLowerCase().indexOf(q)>-1 || String(r.no).toLowerCase().indexOf(q)>-1)) return false;
+    return true;
+  });
+  var maxHal = Math.max(1, Math.ceil(list.length/S.perHal));
+  if(S.halaman > maxHal) S.halaman = maxHal;
+  var a = (S.halaman-1)*S.perHal;
+
+  $('tbTrx').innerHTML = list.slice(a, a+S.perHal).map(function(r){
+    var h = hp[String(r.barang).toUpperCase()];
+    var ok = (typeof h === 'number' && h >= 0);
+    var tag = r.metode === 'QRIS' ? '<span class="tag t-qris">QRIS</span>'
+            : r.metode === 'Tunai' ? '<span class="tag t-tunai">Tunai</span>'
+            : '<span class="tag t-none">Tanpa keterangan</span>';
+    return '<tr><td>' + r.iso + '</td><td>' + esc(r.jam) + '</td><td>' + esc(r.no) + '</td>' +
+      '<td class="store">' + esc(r.barang) + '</td><td class="num">' + ang(r.jumlah) + '</td>' +
+      '<td class="num">' + (ok ? rp(h) : '—') + '</td>' +
+      '<td class="num">' + (ok ? rp(h*r.jumlah) : '—') + '</td><td>' + tag + '</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="empty">Tidak ada transaksi pada filter ini.</td></tr>';
+
+  $('subTrx').textContent = list.length + ' baris' + (S.fMetode ? ' · metode ' + S.fMetode : '');
+  $('pager').innerHTML =
+    '<button class="btn sm" id="pPrev"' + (S.halaman<=1?' style="opacity:.5"':'') + '>← Sebelumnya</button>' +
+    '<span class="sub" style="margin:0 8px">Halaman ' + S.halaman + ' / ' + maxHal + ' · ' + list.length + ' baris</span>' +
+    '<button class="btn sm" id="pNext"' + (S.halaman>=maxHal?' style="opacity:.5"':'') + '>Berikutnya →</button>';
+  $('pPrev').onclick = function(){ if(S.halaman>1){ S.halaman--; renderTrx(h); } };
+  $('pNext').onclick = function(){ if(S.halaman<maxHal){ S.halaman++; renderTrx(h); } };
+}
+
+function renderStok(){
+  var masalah = S.master.filter(function(m){ return masalahStok(m); });
+  var neg = masalah.filter(function(m){ return m.stok!=null && m.stok<0; }).length;
+  var kosong = masalah.filter(function(m){ return m.stok==null || isNaN(m.stok); }).length;
+  $('pillStok').textContent = S.master.length + ' barang';
+  var ct = $('countStok');
+  if(ct){ ct.textContent = masalah.length ? masalah.length : '0'; ct.className = 'tcount' + (masalah.length ? ' warn' : ''); }
+  $('noticeStok').innerHTML = masalah.length
+    ? '<b>' + masalah.length + ' barang perlu dicek:</b> ' + neg + ' stok negatif, ' + kosong +
+      ' stok kosong. Website tidak mengoreksi otomatis — perbaiki di Google Sheets.'
+    : '<b>Semua data stok lengkap.</b> Gak ada yang kosong atau negatif.';
+  if(!masalah.length) $('noticeStok').className = 'notice';
+  // Urut ABJAD A-Z biar enak dilihat (bukan urut stok).
+  $('tbStok').innerHTML = S.master.slice().sort(function(a,b){
+    return String(a.nama).localeCompare(String(b.nama), 'id');
+  }).map(function(m){
+    var st = statusStok(m.stok), ms = masalahStok(m);
+    return '<tr><td class="store">' + esc(m.nama) +
+      '</td><td class="num">' + (m.harga==null?'—':rp(m.harga)) + '</td>' +
+      '<td class="num">' + (m.stok==null?'—':ang(m.stok)) + '</td>' +
+      '<td><span class="tag t-' + st.kode + '">' + st.teks + '</span></td>' +
+      '<td>' + (ms ? '<span class="tag t-habis">' + esc(ms) + '</span>' : '—') + '</td></tr>';
+  }).join('');
+}
+
+function dataTerakhir(){
+  var t = '';
+  S.rows.forEach(function(r){ if(r.iso > t) t = r.iso; });
+  return t;
+}
+function tglIndo(iso){
+  if(!iso) return '-';
+  var B = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+  var p = iso.split('-');
+  return Number(p[2]) + ' ' + B[Number(p[1])-1] + ' ' + p[0];
+}
+function renderKosong(h){
+  var el = $('noticeKosong'); if(!el) return;
+  var p = rentang(), akhir = dataTerakhir();
+  if(h.list.length > 0){ el.classList.add('hidden'); return; }
+
+  var sebab = (p.a === akhir || p.b > akhir)
+    ? 'Periode ini belum ada transaksi. Data terakhir yang masuk: <b>' + tglIndo(akhir) + '</b>.'
+    : 'Tidak ada transaksi pada rentang tanggal ini. Data terakhir: <b>' + tglIndo(akhir) + '</b>.';
+
+  el.className = 'notice n-warn';
+  el.innerHTML = '<b>Periode ' + esc(p.label) + ' (' + p.a + (p.a===p.b?'':' s/d ' + p.b) + ') kosong.</b><br>' + sebab +
+    '<br>Kalau transaksi hari ini belum diinput lewat bot, grafiknya memang kosong - itu normal.' +
+    '<div style="margin-top:11px;display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn sm primary" id="btnDataAkhir">Lihat 7 hari terakhir (Minggu Ini)</button>' +
+    '<button class="btn sm" id="btnKemarin">Lihat kemarin (' + tglIndo(geser(akhir,-1)) + ')</button></div>';
+
+  var ba = $('btnDataAkhir');
+  if(ba) ba.onclick = function(){
+    S.mode = 'minggu';
+    var fc = $('filtersCustom'); if(fc) fc.classList.add('hidden');
+    renderFilters(); renderAll();
+  };
+  var bk = $('btnKemarin');
+  if(bk) bk.onclick = function(){ S.mode = 'custom'; S.dari = geser(akhir,-1); S.sampai = geser(akhir,-1);
+    var da = $('dari'), sa = $('sampai');
+    if(da) da.value = S.dari; if(sa) sa.value = S.sampai;
+    var fc = $('filtersCustom'); if(fc) fc.classList.remove('hidden');
+    renderFilters(); renderAll(); };
+}
+
+function renderAll(){
+  var h = hitung(barisPeriode());
+  renderKosong(h);
+  renderStats(h.total);
+  renderCharts(h, h.total);
+  S.halaman = 1;
+  renderTrx(h);
+  renderStok();
+}
+
+/* ---------------- EKSPOR ---------------- */
+function namaPeriode(){
+  var p = rentang();
+  return 'kopdes-bojongloa-' + p.a + '_' + p.b;
+}
+function teksLaporan(){
+  var h = hitung(barisPeriode()), p = rentang(), t = h.total;
+  var G = new Array(58).join('='), L = new Array(58).join('-');
+  var o = [];
+  o.push(G);
+  o.push('  LAPORAN PENJUALAN - KOPDES BOJONGLOA');
+  o.push('  ' + p.label + ' : ' + p.a + (p.a===p.b?'':' s/d ' + p.b));
+  o.push('  Dicetak: ' + new Date(Date.now()+7*3600000).toISOString().replace('T',' ').slice(0,16) + ' WIB');
+  o.push('  Sumber: ' + (S.sumber==='live' ? 'Google Sheets (data asli)' : 'DATA CONTOH (bukan data asli)'));
+  o.push(G);
+  o.push('');
+  o.push('  RINGKASAN');
+  o.push('  Jumlah transaksi : ' + t.nTrx);
+  o.push('  Total barang     : ' + h.unit);
+  o.push('  TOTAL OMZET      : ' + rp(t.total));
+  o.push('');
+  o.push('  RINCIAN PEMBAYARAN');
+  o.push('  TUNAI            : ' + rp(t.tunai) + '  (' + t.nTunai + ' transaksi)');
+  o.push('  QRIS             : ' + rp(t.qris) + '  (' + t.nQris + ' transaksi)');
+  if(t.nTanpa > 0) o.push('  TANPA KETERANGAN : ' + rp(t.tanpa) + '  (' + t.nTanpa + ' transaksi lama)');
+  o.push('  ' + L);
+  o.push('  TOTAL            : ' + rp(t.total) + '  (' + t.nTrx + ' transaksi)');
+  o.push('');
+  o.push('  CATATAN: omzet dihitung dari harga Master Data saat ini.');
+  o.push('');
+  o.push('  REKAP HARIAN');
+  Object.keys(h.perHari).sort().forEach(function(d){
+    var x = h.perHari[d];
+    o.push('  ' + d + ' | ' + String(x.trx).padStart(3) + ' trx | ' + String(x.unit).padStart(4) +
+           ' brg | total ' + rp(x.tunai+x.qris+x.tanpa));
+  });
+  o.push('');
+  o.push('  DETAIL TRANSAKSI');
+  o.push('  ' + ['TANGGAL','JAM','NO TRX','BARANG','JML','HARGA','SUBTOTAL','METODE'].join(' | '));
+  var hp = hargaPeta();
+  h.list.slice().sort(function(a,b){ return (a.iso+a.jam).localeCompare(b.iso+b.jam); }).forEach(function(r){
+    var hh = hp[String(r.barang).toUpperCase()];
+    var ok = (typeof hh === 'number' && hh >= 0);
+    o.push(['  ' + r.iso, r.jam, r.no, r.barang, r.jumlah, ok?hh:'-', ok?hh*r.jumlah:'-',
+            r.metode || 'Tanpa keterangan'].join(' | '));
+  });
+  o.push('');
+  o.push(G);
+  return o.join('\n');
+}
+function unduh(nama, isi, tipe){
+  var b = new Blob([isi], {type:tipe});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = nama; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+}
+$('btnTxt').onclick = function(){ unduh(namaPeriode() + '.txt', teksLaporan(), 'text/plain;charset=utf-8'); };
+$('btnXls').onclick = function(){
+  var h = hitung(barisPeriode()), t = h.total, p = rentang(), hp = hargaPeta();
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+    ['LAPORAN PENJUALAN KOPDES BOJONGLOA'], [],
+    ['Periode', p.label], ['Dari', p.a], ['Sampai', p.b],
+    ['Sumber', S.sumber==='live' ? 'Google Sheets (data asli)' : 'DATA CONTOH (bukan data asli)'], [],
+    ['Jumlah transaksi', t.nTrx], ['Total barang', h.unit],
+    ['TOTAL OMZET', t.total], [],
+    ['TUNAI', t.tunai], ['jumlah transaksi tunai', t.nTunai],
+    ['QRIS', t.qris], ['jumlah transaksi qris', t.nQris],
+    ['TANPA KETERANGAN', t.tanpa], ['jumlah transaksi tanpa keterangan', t.nTanpa]
+  ]), 'Ringkasan');
+
+  var hd = [['Tanggal','Transaksi','Barang','Omzet']];
+  Object.keys(h.perHari).sort().forEach(function(d){
+    var x = h.perHari[d];
+    hd.push([d, x.trx, x.unit, x.tunai + x.qris + x.tanpa]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hd), 'Rekap Harian');
+
+  var dt = [['Tanggal','Jam','No Transaksi','Nama Barang','Jumlah','Harga','Subtotal','Metode']];
+  h.list.slice().sort(function(a,b){ return (a.iso+a.jam).localeCompare(b.iso+b.jam); }).forEach(function(r){
+    var hh = hp[String(r.barang).toUpperCase()];
+    var ok = (typeof hh === 'number' && hh >= 0);
+    dt.push([r.iso, r.jam, r.no, r.barang, r.jumlah, ok?hh:'', ok?hh*r.jumlah:'', r.metode||'Tanpa keterangan']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dt), 'Detail Transaksi');
+
+  var pp = [['Produk','Unit','Transaksi','Nilai']];
+  h.produk.slice().sort(function(a,b){ return b.unit-a.unit; }).forEach(function(x){
+    pp.push([x.nama, x.unit, x.trx, x.ada ? x.nilai : '']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pp), 'Per Produk');
+
+  var st = [['Nama Barang','Kategori','Harga','Stok','Status','Masalah']];
+  S.master.forEach(function(m){
+    st.push([m.nama, kategoriProduk(m.nama), m.harga==null?'':m.harga,
+             m.stok==null?'':m.stok, statusStok(m.stok).teks, masalahStok(m)]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(st), 'Stok');
+  XLSX.writeFile(wb, namaPeriode() + '.xlsx');
+};
+
+/* ---------------- TAB NAVIGASI ---------------- */
+function setView(v){
+  ['ringkasan','transaksi','stok'].forEach(function(x){
+    var el = document.getElementById('v-' + x);
+    if(el) el.classList.toggle('hidden', x !== v);
+  });
+  [].forEach.call(document.querySelectorAll('#tabs .tab'), function(t){
+    t.classList.toggle('on', t.dataset.v === v);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+[].forEach.call(document.querySelectorAll('#tabs .tab'), function(t){
+  t.onclick = function(){ setView(t.dataset.v); };
+});
+
+/* ---------------- HANDLER FILTER ---------------- */
+$('btnTerap').onclick = function(){
+  var a = $('dari').value, b = $('sampai').value;
+  if(!a || !b){ alert('Isi dua tanggalnya dulu.'); return; }
+  if(a > b){ alert('Tanggal awal gak boleh lewat tanggal akhir.'); return; }
+  S.dari = a; S.sampai = b;
+  renderAll();
+};
+$('cari').addEventListener('input', function(){
+  S.cari = $('cari').value; S.halaman = 1;
+  renderTrx(hitung(barisPeriode()));
+});
+$('fMetode').addEventListener('change', function(){
+  S.fMetode = $('fMetode').value; S.halaman = 1;
+  renderTrx(hitung(barisPeriode()));
+});
+
+/* ---------------- MULAI: LANGSUNG DATA LIVE (tanpa contoh, tanpa PIN) ---------------- */
+(async function(){
+  $('sumber').textContent = 'memuat data live...';
+  $('noticeMetode').className = 'notice n-warn';
+  $('noticeMetode').innerHTML = '<b>Sumber data:</b> Google Sheets langsung - tab <b>Master data</b> ' +
+    'dan <b>Penjualan</b> (termasuk arsip bulanan). Dibaca pakai koneksi JSONP, tanpa server.';
+
+  try{
+    S.master = await muatMasterLive();
+    S.rows = await muatJualLive();
+    if(!S.rows.length) throw new Error('tab Penjualan kosong / tidak terbaca');
+
+    $('sumber').textContent = 'DATA LIVE - Google Sheets';
+    $('noticeMetode').className = 'notice n-warn';
+    $('noticeMetode').innerHTML = '<b>Sumber data:</b> Google Sheets langsung - <b>' + S.master.length +
+      '</b> barang di Master data, <b>' + S.rows.length + '</b> baris penjualan terbaca. ' +
+      'Transaksi lama belum punya kolom Metode \u2192 masuk hitungan <b>Tanpa keterangan</b>.';
+
+    renderFilters();
+    renderAll();
+  }catch(e){
+    S.master = [];
+    S.rows = [];
+    $('sumber').textContent = 'GAGAL MEMUAT';
+    $('noticeMetode').className = 'notice n-bad';
+    $('noticeMetode').innerHTML = '<b>Gagal mengambil data dari Google Sheets.</b><br>' +
+      'Penyebab yang mungkin:<br>' +
+      '1. Internet mati / lambat<br>' +
+      '2. Spreadsheet belum dibuka untuk publik (Share \u2192 Anyone with the link \u2192 Viewer)<br>' +
+      '3. Nama tab berubah (Master data / Penjualan)<br><br>' +
+      'Detail: <i>' + esc(e.message) + '</i><br>' +
+      '<button class="btn sm primary" style="margin-top:10px" onclick="location.reload()">\u21bb Coba Lagi</button>';
+    $('stats').innerHTML = '';
+    $('barBayar').innerHTML = '';
+    $('tbTrx').innerHTML = '';
+    $('tbStok').innerHTML = '';
+  }
+})();
+</script>
+</body>
+</html>
+
