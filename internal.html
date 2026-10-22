@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masuk - KDKMP Merah Putih</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="index.html"><strong>KDKMP Merah Putih</strong><span>Bojongloa</span></a>
+    <nav class="head-nav" id="navSesi" aria-label="Navigasi akun">
+      <a class="btn btn-sm" href="index.html">Katalog</a>
+      <button class="btn btn-sm btn-quiet hidden" id="btnKeluar" type="button">Keluar</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ MASUK ============ -->
+<main id="layarMasuk" class="auth">
+  <div class="panel">
+    <h1>Masuk ke panel toko</h1>
+    <p class="sub">Pekerja memakai PIN bersama. Pemilik memakai username dan password.</p>
+
+    <div class="switcher" role="group" aria-label="Pilih jenis masuk">
+      <button class="btn" id="tabPekerja" type="button" aria-pressed="true">Pekerja</button>
+      <button class="btn" id="tabPemilik" type="button" aria-pressed="false">Pemilik</button>
+    </div>
+
+    <form id="formPin" autocomplete="off">
+      <div class="field">
+        <label for="pin">PIN pekerja</label>
+        <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="4 sampai 8 angka" required>
+        <p class="hint">Tanyakan PIN ke pemilik toko.</p>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Masuk</button>
+      <p class="err" id="errPin" role="alert"></p>
+    </form>
+
+    <form id="formPemilik" autocomplete="off" class="hidden">
+      <div class="field">
+        <label for="user">Username</label>
+        <input id="user" type="text" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="pass">Password</label>
+        <input id="pass" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%">Masuk sebagai pemilik</button>
+      <p class="err" id="errPemilik" role="alert"></p>
+    </form>
+  </div>
+</main>
+
+<!-- ============ APLIKASI ============ -->
+<main id="layarApp" class="hidden">
+  <div class="wrap">
+    <div class="page-head" style="padding-bottom:8px">
+      <h1 id="judulApp">Ringkasan</h1>
+      <p id="subJudul">Memuat data...</p>
+    </div>
+
+    <nav class="tabs" role="tablist" aria-label="Bagian panel">
+      <button class="tab" role="tab" data-tab="ringkasan" aria-selected="true" type="button">Ringkasan</button>
+      <button class="tab" role="tab" data-tab="transaksi" aria-selected="false" type="button">Riwayat transaksi</button>
+      <button class="tab" role="tab" data-tab="stok" aria-selected="false" type="button">Stok</button>
+      <button class="tab hidden" role="tab" data-tab="kelola" aria-selected="false" type="button" id="tabKelola">Kelola katalog</button>
+    </nav>
+
+    <div class="chips" id="periode" role="group" aria-label="Pilih periode"></div>
+    <div class="row hidden" id="rentang" style="margin-bottom:16px">
+      <div class="field"><label for="dari">Dari tanggal</label><input id="dari" type="date"></div>
+      <div class="field"><label for="sampai">Sampai tanggal</label><input id="sampai" type="date"></div>
+      <button class="btn btn-primary" id="btnTerap" type="button">Terapkan</button>
+    </div>
+
+    <div id="pesanApp" class="notice n-info hidden" role="status"></div>
+
+    <!-- Ringkasan -->
+    <section id="v-ringkasan" role="tabpanel">
+      <div class="kpi" id="kpi"></div>
+      <div class="panel">
+        <h2>Omzet per hari</h2>
+        <p class="sub" id="subHarian">-</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Tanggal</th><th class="num">Transaksi</th><th class="num">Barang</th>
+              <th class="num">Tunai</th><th class="num">QRIS</th><th class="num">Total</th>
+            </tr></thead>
+            <tbody id="tbHarian"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transaksi -->
+    <section id="v-transaksi" role="tabpanel" class="hidden">
+      <div class="row" style="margin-bottom:12px">
+        <div class="field" style="flex:1 1 260px">
+          <label for="cariTrx">Cari</label>
+          <input id="cariTrx" type="search" placeholder="Nama barang atau nomor transaksi">
+        </div>
+        <div class="field" style="flex:0 1 200px">
+          <label for="fMetode">Metode</label>
+          <select id="fMetode">
+            <option value="">Semua metode</option>
+            <option value="Tunai">Tunai</option>
+            <option value="QRIS">QRIS</option>
+            <option value="-">Tanpa keterangan</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Tanggal</th><th>Jam</th><th>No transaksi</th><th>Barang</th>
+            <th class="num">Jumlah</th><th class="num">Harga</th><th class="num">Subtotal</th><th>Metode</th>
+          </tr></thead>
+          <tbody id="tbTrx"></tbody>
+        </table>
+      </div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+    <!-- Stok -->
+    <section id="v-stok" role="tabpanel" class="hidden">
+      <div class="panel">
+        <h2>Stok barang</h2>
+        <p class="sub" id="subStok">-</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Barang</th><th class="num">Harga</th><th class="num">Stok</th>
+              <th>Status</th><th>Catatan</th>
+            </tr></thead>
+            <tbody id="tbStok"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Kelola (pemilik) -->
+    <section id="v-kelola" role="tabpanel" class="hidden">
+      <div class="notice n-info">
+        <p>Nama, harga, dan stok tetap dari Google Sheets. Di sini hanya gambar, kategori, dan link affiliate. Tempel ID atau link Google Drive pada kolom gambar.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <h2>Katalog produk</h2>
+        <p class="sub" id="subKelola">-</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Barang</th><th class="num">Harga</th><th>Gambar (ID Drive / URL)</th>
+              <th>Kategori</th><th>Link affiliate Shopee</th><th></th>
+            </tr></thead>
+            <tbody id="tbKelola"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px">
+        <h2>PIN pekerja</h2>
+        <p class="sub">Satu PIN dipakai semua pekerja. Ganti kapan saja; sesi pekerja lama otomatis berakhir.</p>
+        <div class="row">
+          <div class="field"><label for="pinBaru">PIN baru (4 sampai 8 angka)</label><input id="pinBaru" type="password" inputmode="numeric" maxlength="8"></div>
+          <button class="btn btn-primary" id="btnPin" type="button">Simpan PIN</button>
+        </div>
+        <p class="err" id="errPinBaru"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Password pemilik</h2>
+        <p class="sub">Ganti password akun pemilik. Minimal 8 karakter.</p>
+        <div class="row">
+          <div class="field"><label for="passLama">Password lama</label><input id="passLama" type="password" autocomplete="current-password"></div>
+          <div class="field"><label for="passBaru">Password baru</label><input id="passBaru" type="password" autocomplete="new-password"></div>
+          <button class="btn btn-primary" id="btnPass" type="button">Ganti password</button>
+        </div>
+        <p class="err" id="errPass"></p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="assets/api.js"></script>
+<script>
+(function () {
+  var sesi = SESI.ambil();
+  var state = {
+    tab: 'ringkasan',
+    periode: 'hari',
+    dari: '',
+    sampai: '',
+    halaman: 1,
+    cari: '',
+    metode: '',
+    kategoriBaku: []
+  };
+
+  var el = function (id) { return document.getElementById(id); };
+
+  function pesan(teks, jenis) {
+    var p = el('pesanApp');
+    if (!teks) { p.className = 'notice n-info hidden'; p.innerHTML = ''; return; }
+    p.className = 'notice ' + (jenis || 'n-info');
+    p.innerHTML = '<p>' + teks + '</p>';
+  }
+
+  /* ---------- masuk ---------- */
+
+  function modeMasuk(m) {
+    var pekerja = m === 'pekerja';
+    el('tabPekerja').classList.toggle('chip-on', pekerja);
+    el('tabPemilik').classList.toggle('chip-on', !pekerja);
+    el('tabPekerja').setAttribute('aria-pressed', String(pekerja));
+    el('tabPemilik').setAttribute('aria-pressed', String(!pekerja));
+    el('formPin').classList.toggle('hidden', !pekerja);
+    el('formPemilik').classList.toggle('hidden', pekerja);
+  }
+
+  el('tabPekerja').addEventListener('click', function () { modeMasuk('pekerja'); });
+  el('tabPemilik').addEventListener('click', function () { modeMasuk('pemilik'); });
+
+  el('formPin').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    el('errPin').textContent = '';
+    var pin = el('pin').value.trim();
+    if (!/^\d{4,8}$/.test(pin)) { el('errPin').textContent = 'PIN harus 4 sampai 8 angka.'; return; }
+    try {
+      var d = await panggil('pin.login', { pin: pin });
+      if (!d.ok) { el('errPin').textContent = d.error || 'PIN salah.'; return; }
+      SESI.simpan(d);
+      mulaiApp();
+    } catch (err) { el('errPin').textContent = err.message; }
+  });
+
+  el('formPemilik').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    el('errPemilik').textContent = '';
+    try {
+      var d = await panggil('owner.login', { user: el('user').value.trim(), pass: el('pass').value });
+      if (!d.ok) { el('errPemilik').textContent = d.error || 'Gagal masuk.'; return; }
+      SESI.simpan(d);
+      mulaiApp();
+    } catch (err) { el('errPemilik').textContent = err.message; }
+  });
+
+  el('btnKeluar').addEventListener('click', function () {
+    SESI.hapus();
+    location.reload();
+  });
+
+  /* ---------- kerangka app ---------- */
+
+  function mulaiApp() {
+    sesi = SESI.ambil();
+    if (!sesi) return;
+    el('layarMasuk').classList.add('hidden');
+    el('layarApp').classList.remove('hidden');
+    el('btnKeluar').classList.remove('hidden');
+    el('tabKelola').classList.toggle('hidden', sesi.role !== 'pemilik');
+    el('subJudul').textContent = sesi.role === 'pemilik'
+      ? 'Masuk sebagai pemilik' + (sesi.nama && sesi.nama !== 'pemilik' ? ' (' + sesi.nama + ')' : '')
+      : 'Masuk sebagai pekerja toko';
+    renderPeriode();
+    pindahTab('ringkasan');
+    muatRingkasan();
+  }
+
+  function pindahTab(t) {
+    state.tab = t;
+    ['ringkasan', 'transaksi', 'stok', 'kelola'].forEach(function (x) {
+      var v = el('v-' + x);
+      if (v) v.classList.toggle('hidden', x !== t);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+      b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === t));
+    });
+    var judul = { ringkasan: 'Ringkasan', transaksi: 'Riwayat transaksi', stok: 'Stok barang', kelola: 'Kelola katalog' };
+    el('judulApp').textContent = judul[t] || 'Panel';
+    pesan('');
+    el('periode').classList.toggle('hidden', t === 'stok' || t === 'kelola');
+    el('rentang').classList.toggle('hidden', state.periode !== 'rentang' || t === 'stok' || t === 'kelola');
+    if (t === 'transaksi') muatTransaksi();
+    if (t === 'stok') muatStok();
+    if (t === 'kelola') muatKelola();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) {
+    b.addEventListener('click', function () { pindahTab(b.getAttribute('data-tab')); });
+  });
+
+  /* ---------- periode ---------- */
+
+  var PERIODE = [
+    ['hari', 'Hari ini'],
+    ['kemarin', 'Kemarin'],
+    ['minggu', 'Minggu ini'],
+    ['semua', 'Keseluruhan'],
+    ['rentang', 'Rentang tanggal']
+  ];
+
+  function renderPeriode() {
+    el('periode').innerHTML = PERIODE.map(function (p) {
+      return '<button class="btn btn-sm' + (state.periode === p[0] ? ' chip-on' : '') + '" data-p="' + p[0] + '" type="button">' + p[1] + '</button>';
+    }).join('');
+    Array.prototype.forEach.call(el('periode').querySelectorAll('[data-p]'), function (b) {
+      b.addEventListener('click', function () {
+        state.periode = b.getAttribute('data-p');
+        state.halaman = 1;
+        if (state.periode === 'rentang' && !state.dari) {
+          var kini = new Date();
+          var awal = new Date(kini.getFullYear(), kini.getMonth(), 1);
+          state.dari = awal.toISOString().slice(0, 10);
+          state.sampai = kini.toISOString().slice(0, 10);
+          el('dari').value = state.dari;
+          el('sampai').value = state.sampai;
+        }
+        renderPeriode();
+        el('rentang').classList.toggle('hidden', state.periode !== 'rentang');
+        if (state.tab === 'ringkasan') muatRingkasan();
+        if (state.tab === 'transaksi') muatTransaksi();
+      });
+    });
+    el('rentang').classList.toggle('hidden', state.periode !== 'rentang');
+  }
+
+  el('btnTerap').addEventListener('click', function () {
+    var a = el('dari').value, b = el('sampai').value;
+    if (!a || !b) { pesan('Isi kedua tanggal dulu.', 'n-warn'); return; }
+    if (a > b) { pesan('Tanggal awal tidak boleh melewati tanggal akhir.', 'n-warn'); return; }
+    state.dari = a; state.sampai = b; state.halaman = 1;
+    pesan('');
+    if (state.tab === 'ringkasan') muatRingkasan();
+    if (state.tab === 'transaksi') muatTransaksi();
+  });
+
+  function paramPeriode() {
+    var p = { periode: state.periode };
+    if (state.periode === 'rentang') { p.dari = state.dari; p.sampai = state.sampai; }
+    return p;
+  }
+
+  /* ---------- ringkasan ---------- */
+
+  async function muatRingkasan() {
+    pesan('Memuat ringkasan...');
+    el('kpi').innerHTML = '';
+    el('tbHarian').innerHTML = '<tr><td colspan="6" class="empty">Memuat...</td></tr>';
+    try {
+      var d = await panggil('dashboard', paramPeriode());
+      if (!d.ok) throw new Error(d.error || 'gagal memuat');
+      var t = d.total;
+
+      var kartu = [
+        ['Omzet', rp(t.total), t.nTrx + ' transaksi'],
+        ['Tunai', rp(t.tunai), t.nTunai + ' transaksi'],
+        ['QRIS', rp(t.qris), t.nQris + ' transaksi']
+      ];
+      if ((t.nLain || 0) > 0) kartu.push(['Tanpa keterangan', rp(lainNilai(t)), t.nLain + ' transaksi']);
+      kartu.push(['Barang terjual', angka(d.unit) + ' unit', d.jumlahBaris + ' baris transaksi']);
+      el('kpi').innerHTML = kartu.map(function (k) {
+        return '<div class="kpi-item"><div class="lab">' + k[0] + '</div><div class="val">' + k[1] + '</div><div class="note">' + k[2] + '</div></div>';
+      }).join('');
+
+      var catatan = 'Periode: ' + d.periode.label + '.';
+      if (d.belumTercatat && d.belumTercatat.baris > 0) {
+        pesan('Ada ' + d.belumTercatat.baris + ' baris (' + angka(d.belumTercatat.unit) +
+          ' unit) yang barangnya tidak ada di Master data, jadi nilainya belum dihitung. Perbaiki nama barang di sheet lalu muat ulang.', 'n-warn');
+      } else {
+        pesan('<span class="sr">Status: </span>' + catatan + ' Omzet dihitung dari harga Master data saat ini.');
+      }
+
+      el('subHarian').textContent = d.perHari.length
+        ? d.perHari.length + ' hari ada transaksi. Total ' + rp(t.total) + '.'
+        : 'Belum ada transaksi pada periode ini.';
+
+      el('tbHarian').innerHTML = d.perHari.length
+        ? d.perHari.map(function (h) {
+            return '<tr><td>' + tglIndo(h.iso) + '</td><td class="num">' + angka(h.trx) + '</td>' +
+              '<td class="num">' + angka(h.unit) + '</td><td class="num">' + rp(h.tunai) + '</td>' +
+              '<td class="num">' + rp(h.qris) + '</td><td class="num strong">' + rp(h.total) + '</td></tr>';
+          }).join('')
+        : '<tr><td colspan="6" class="empty">Tidak ada transaksi pada periode ini.</td></tr>';
+    } catch (e) {
+      pesan('Gagal memuat ringkasan. ' + esc(e.message), 'n-stop');
+      el('tbHarian').innerHTML = '';
+    }
+  }
+
+  function lainNilai(t) {
+    if (typeof t.lain === 'number') return t.lain;
+    return 0;
+  }
+
+  /* ---------- transaksi ---------- */
+
+  async function muatTransaksi() {
+    var p = paramPeriode();
+    p.halaman = state.halaman;
+    p.perHal = 50;
+    if (state.cari) p.cari = state.cari;
+    if (state.metode) p.metode = state.metode;
+
+    el('tbTrx').innerHTML = '<tr><td colspan="8" class="empty">Memuat...</td></tr>';
+    try {
+      var d = await panggil('trx', p);
+      if (!d.ok) throw new Error(d.error || 'gagal memuat');
+      el('tbTrx').innerHTML = d.baris.length
+        ? d.baris.map(function (r) {
+            var tag = r.metode === 'QRIS' ? '<span class="badge b-cat">QRIS</span>'
+              : r.metode === 'Tunai' ? '<span class="badge b-tersedia">Tunai</span>'
+              : '<span class="badge b-na">Tanpa keterangan</span>';
+            return '<tr><td>' + tglIndo(r.iso) + '</td><td>' + esc(r.jam) + '</td>' +
+              '<td>' + esc(r.no) + '</td><td class="strong">' + esc(r.barang) + '</td>' +
+              '<td class="num">' + angka(r.jumlah) + '</td>' +
+              '<td class="num">' + (r.harga === null ? '-' : rp(r.harga)) + '</td>' +
+              '<td class="num">' + (r.subtotal === null ? '-' : rp(r.subtotal)) + '</td>' +
+              '<td>' + tag + '</td></tr>';
+          }).join('')
+        : '<tr><td colspan="8" class="empty">Tidak ada transaksi pada filter ini.</td></tr>';
+
+      var maxHal = Math.max(1, Math.ceil(d.total / d.perHal));
+      el('pager').innerHTML =
+        '<button class="btn btn-sm" id="pPrev" type="button"' + (d.halaman <= 1 ? ' disabled' : '') + '>Sebelumnya</button>' +
+        '<span>Halaman ' + d.halaman + ' dari ' + maxHal + '. ' + angka(d.total) + ' baris.</span>' +
+        '<button class="btn btn-sm" id="pNext" type="button"' + (d.halaman >= maxHal ? ' disabled' : '') + '>Berikutnya</button>';
+      el('pPrev').addEventListener('click', function () { if (state.halaman > 1) { state.halaman--; muatTransaksi(); } });
+      el('pNext').addEventListener('click', function () { if (state.halaman < maxHal) { state.halaman++; muatTransaksi(); } });
+    } catch (e) {
+      el('tbTrx').innerHTML = '<tr><td colspan="8" class="empty">Gagal memuat. ' + esc(e.message) + '</td></tr>';
+      el('pager').innerHTML = '';
+    }
+  }
+
+  var timerCari;
+  el('cariTrx').addEventListener('input', function () {
+    clearTimeout(timerCari);
+    timerCari = setTimeout(function () {
+      state.cari = el('cariTrx').value.trim();
+      state.halaman = 1;
+      muatTransaksi();
+    }, 350);
+  });
+  el('fMetode').addEventListener('change', function () {
+    state.metode = el('fMetode').value;
+    state.halaman = 1;
+    muatTransaksi();
+  });
+
+  /* ---------- stok ---------- */
+
+  async function muatStok() {
+    el('tbStok').innerHTML = '<tr><td colspan="5" class="empty">Memuat...</td></tr>';
+    try {
+      var d = await panggil('stok');
+      if (!d.ok) throw new Error(d.error || 'gagal memuat');
+      el('subStok').textContent = d.jumlah + ' barang. ' +
+        (d.perluDicek ? d.perluDicek + ' perlu dicek.' : 'Semua data stok terisi.');
+      el('tbStok').innerHTML = d.baris.map(function (r) {
+        return '<tr><td class="strong">' + esc(r.nama) + '</td>' +
+          '<td class="num">' + (r.harga === null ? '-' : rp(r.harga)) + '</td>' +
+          '<td class="num">' + (r.stok === null ? '-' : angka(r.stok)) + '</td>' +
+          '<td><span class="badge ' + kelasStatus(r.kode) + '">' + esc(r.status) + '</span></td>' +
+          '<td>' + (r.masalah ? esc(r.masalah) : '-') + '</td></tr>';
+      }).join('');
+    } catch (e) {
+      el('tbStok').innerHTML = '<tr><td colspan="5" class="empty">Gagal memuat. ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  /* ---------- kelola (pemilik) ---------- */
+
+  async function muatKelola() {
+    if (!sesi || sesi.role !== 'pemilik') return;
+    el('tbKelola').innerHTML = '<tr><td colspan="6" class="empty">Memuat...</td></tr>';
+    try {
+      var d = await panggil('katalog.list');
+      if (!d.ok) throw new Error(d.error || 'gagal memuat');
+      state.kategoriBaku = d.kategori || [];
+      el('subKelola').textContent = d.jumlah + ' barang. Perubahan langsung tampil di katalog publik.';
+
+      el('tbKelola').innerHTML = d.baris.map(function (r, i) {
+        var opsi = state.kategoriBaku.map(function (k) {
+          return '<option value="' + esc(k) + '"' + (k === r.kategori ? ' selected' : '') + '>' + esc(k) + '</option>';
+        }).join('');
+        if (r.kategori && state.kategoriBaku.indexOf(r.kategori) < 0) {
+          opsi = '<option value="' + esc(r.kategori) + '" selected>' + esc(r.kategori) + '</option>' + opsi;
+        }
+        return '<tr data-i="' + i + '">' +
+          '<td class="strong">' + esc(r.nama) + '<div class="note" style="font-size:13px;color:#57544e">Stok ' +
+            (r.stok === null ? '-' : angka(r.stok)) + '</div></td>' +
+          '<td class="num">' + (r.harga === null ? '-' : rp(r.harga)) + '</td>' +
+          '<td><input data-f="gambar" value="' + esc(r.gambar) + '" placeholder="ID Drive atau URL" aria-label="Gambar ' + esc(r.nama) + '" style="min-width:200px"></td>' +
+          '<td><select data-f="kategori" aria-label="Kategori ' + esc(r.nama) + '">' + opsi + '</select></td>' +
+          '<td><input data-f="affiliate" value="' + esc(r.affiliate) + '" placeholder="https://s.shopee.co.id/..." aria-label="Link affiliate ' + esc(r.nama) + '" style="min-width:220px"></td>' +
+          '<td><button class="btn btn-sm btn-primary" type="button" data-simpan="' + i + '">Simpan</button></td>' +
+          '</tr>';
+      }).join('');
+
+      Array.prototype.forEach.call(el('tbKelola').querySelectorAll('[data-simpan]'), function (b) {
+        b.addEventListener('click', async function () {
+          var tr = b.closest('tr');
+          var i = Number(b.getAttribute('data-simpan'));
+          var item = d.baris[i];
+          b.disabled = true;
+          b.textContent = 'Menyimpan...';
+          try {
+            var r = await panggil('katalog.save', {
+              nama: item.nama,
+              gambar: tr.querySelector('[data-f="gambar"]').value.trim(),
+              kategori: tr.querySelector('[data-f="kategori"]').value,
+              affiliate: tr.querySelector('[data-f="affiliate"]').value.trim()
+            });
+            if (!r.ok) throw new Error(r.error || 'gagal menyimpan');
+            b.textContent = 'Tersimpan';
+            setTimeout(function () { b.textContent = 'Simpan'; b.disabled = false; }, 1400);
+          } catch (e) {
+            b.textContent = 'Gagal';
+            pesan('Gagal menyimpan ' + esc(item.nama) + ': ' + esc(e.message), 'n-stop');
+            setTimeout(function () { b.textContent = 'Simpan'; b.disabled = false; }, 1800);
+          }
+        });
+      });
+    } catch (e) {
+      el('tbKelola').innerHTML = '<tr><td colspan="6" class="empty">Gagal memuat. ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  el('btnPin').addEventListener('click', async function () {
+    el('errPinBaru').textContent = '';
+    var pin = el('pinBaru').value.trim();
+    if (!/^\d{4,8}$/.test(pin)) { el('errPinBaru').textContent = 'PIN harus 4 sampai 8 angka.'; return; }
+    try {
+      var d = await panggil('pin.set', { pin: pin });
+      if (!d.ok) { el('errPinBaru').textContent = d.error || 'Gagal.'; return; }
+      el('pinBaru').value = '';
+      el('errPinBaru').style.color = '#1f5130';
+      el('errPinBaru').textContent = d.pesan || 'PIN diperbarui.';
+      setTimeout(function () { el('errPinBaru').textContent = ''; el('errPinBaru').style.color = ''; }, 4000);
+    } catch (e) { el('errPinBaru').textContent = e.message; }
+  });
+
+  el('btnPass').addEventListener('click', async function () {
+    el('errPass').textContent = '';
+    var lama = el('passLama').value, baru = el('passBaru').value;
+    if (baru.length < 8) { el('errPass').textContent = 'Password baru minimal 8 karakter.'; return; }
+    try {
+      var d = await panggil('owner.pass', { lama: lama, baru: baru });
+      if (!d.ok) { el('errPass').textContent = d.error || 'Gagal.'; return; }
+      el('passLama').value = ''; el('passBaru').value = '';
+      el('errPass').style.color = '#1f5130';
+      el('errPass').textContent = d.pesan || 'Password diperbarui.';
+      setTimeout(function () { el('errPass').textContent = ''; el('errPass').style.color = ''; }, 4000);
+    } catch (e) { el('errPass').textContent = e.message; }
+  });
+
+  /* ---------- mulai ---------- */
+
+  modeMasuk('pekerja');
+  if (sesi) mulaiApp();
+})();
+</script>
+</body>
+</html>
