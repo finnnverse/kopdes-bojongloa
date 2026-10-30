@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{--merah:#C71E1E;--merah-tua:#9e1515;--merah-muda:#fdecec;--abu:#5b5b5b;
 --bg:#faf9f9;--garis:#ececec;--hijau:#0a7d3a;--hijau-muda:#e6f6ec;
@@ -166,6 +168,7 @@ color:#666;font-size:10.5px;font-weight:800;text-align:center}
   <div class="top">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
       <button class="btn sm primary" id="btnXls">⬇ Unduh Excel</button>
+      <button class="btn sm primary" id="btnPdf">⬇ Unduh PDF</button>
     </div>
   </div>
   <div class="hidden" id="noticeMetode"></div>
@@ -687,6 +690,52 @@ $('btnXls').onclick = function(){
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pp), 'Per Produk');
 
   XLSX.writeFile(wb, namaPeriode() + '.xlsx');
+};
+
+$('btnPdf').onclick = function(){
+  if(!window.jspdf || !window.jspdf.jsPDF){ alert('Modul PDF belum termuat. Periksa koneksi internet lalu coba lagi.'); return; }
+  var h = hitung(barisPeriode()), t = h.total, p = rentang();
+  var doc = new window.jspdf.jsPDF({ unit:'pt', format:'a4' });
+  var hijau = [21,128,61], y;
+  function tabel(judul, head, body){
+    y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 24;
+    if(y > 760){ doc.addPage(); y = 50; }
+    doc.setFontSize(12); doc.setFont(undefined,'bold'); doc.text(judul, 40, y);
+    doc.autoTable({ startY:y+8, head:[head], body:body.length ? body : [[{content:'Tidak ada data', colSpan:head.length}]],
+      theme:'grid', styles:{fontSize:9}, headStyles:{fillColor:hijau}, margin:{left:40,right:40} });
+  }
+
+  doc.setFontSize(15); doc.setFont(undefined,'bold');
+  doc.text('LAPORAN PENJUALAN KOPDES BOJONGLOA', 40, 50);
+  doc.setFontSize(10); doc.setFont(undefined,'normal');
+  doc.text('Periode: ' + p.label + '  (' + p.a + ' s/d ' + p.b + ')', 40, 68);
+  doc.text('Sumber: ' + (S.sumber==='live' ? 'Google Sheets (data asli)' : 'DATA CONTOH (bukan data asli)'), 40, 82);
+  y = 82;
+
+  tabel('Ringkasan', ['Keterangan','Nilai'], [
+    ['Jumlah transaksi', ang(t.nTrx)], ['Total barang', ang(h.unit)],
+    ['TOTAL OMZET', rp(t.total)],
+    ['Tunai', rp(t.tunai) + '  (' + ang(t.nTunai) + ' trx)'],
+    ['QRIS', rp(t.qris) + '  (' + ang(t.nQris) + ' trx)']
+  ]);
+
+  tabel('Rekap Harian', ['Tanggal','Transaksi','Barang','Omzet'],
+    Object.keys(h.perHari).sort().map(function(d){
+      var x = h.perHari[d];
+      return [d, ang(x.trx), ang(x.unit), rp(x.tunai + x.qris)];
+    }));
+
+  tabel('Per Produk', ['Produk','Unit','Transaksi','Nilai'],
+    h.produk.slice().sort(function(a,b){ return b.unit-a.unit; }).map(function(x){
+      return [x.nama, ang(x.unit), ang(x.trx), x.ada ? rp(x.nilai) : '-'];
+    }));
+
+  tabel('Detail Transaksi', ['Tanggal','Jam','No Transaksi','Nama Barang','Jumlah','Metode'],
+    h.list.slice().sort(urutWaktu).map(function(r){
+      return [r.iso, r.jam, r.no, r.barang, ang(r.jumlah), r.metode||'Tunai'];
+    }));
+
+  doc.save(namaPeriode() + '.pdf');
 };
 
 /* ---------------- TAB NAVIGASI ---------------- */
