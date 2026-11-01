@@ -356,13 +356,29 @@ async function muatMasterLive(){
     return { nama: teks(c,0), harga: (h===null||isNaN(h))?null:h, stok: (s===null||isNaN(s))?null:s };
   }).filter(function(x){ return x.nama; });
 }
+/* tutup buku tiap bulan: tab "Penjualan YYYY-MM" dari 2026-09 s/d bulan ini ikut dibaca otomatis */
+function daftarTabJual(){
+  var tabs = TAB_JUAL.slice(), ada = {};
+  tabs.forEach(function(t){ ada[t.nama] = 1; });
+  var bln = '2026-09', akhir = hariIni().slice(0,7);
+  while(bln <= akhir){
+    var nm = 'Penjualan ' + bln;
+    if(!ada[nm]){ tabs.push({ nama: nm, wajib: ['No Transaksi', 'Nama Barang'] }); ada[nm] = 1; }
+    bln = geser(bln + '-01', 32).slice(0,7);
+  }
+  return tabs;
+}
 async function muatJualLive(){
-  var semua=[];
-  for(var i=0;i<TAB_JUAL.length;i++){
-    var t=TAB_JUAL[i];
+  var semua=[], tabs=daftarTabJual(), sudah={};
+  for(var i=0;i<tabs.length;i++){
+    var t=tabs[i];
     try{
       var d=await jsonp(t.nama);
       if(!punya(cols(d), t.wajib)) continue;
+      // kalau nama tab tidak ada, Google kadang mengirim tab lain -> jangan dihitung dua kali
+      var rr=d.table.rows||[], tanda=rr.length+'|'+JSON.stringify(rr[0])+'|'+JSON.stringify(rr[rr.length-1]);
+      if(sudah[tanda]) continue;
+      sudah[tanda]=1;
       (d.table.rows||[]).forEach(function(r){
         var c=r.c||[];
         var no=teks(c,0), iso=keIso(teks(c,1)), jam=teks(c,2), br=teks(c,3);
