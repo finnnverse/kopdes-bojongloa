@@ -344,15 +344,24 @@ function jsonp(sheet){
 }
 function cols(d){ return (d&&d.table&&d.table.cols?d.table.cols:[]).map(function(c){return (c.label||'').trim();}); }
 function punya(c, wajib){ return wajib.every(function(w){ return c.indexOf(w)>-1; }); }
+/* cari nomor kolom lewat nama header (tidak peduli huruf besar/kecil); kalau tidak ketemu pakai posisi lama */
+function kolom(c, nama, lama){
+  var n = String(nama).toUpperCase();
+  for(var i=0;i<c.length;i++){ if(String(c[i]).toUpperCase() === n) return i; }
+  return lama;
+}
 function teks(c, i){ if(!c||!c[i]) return ''; var v=c[i]; return String(v.f!=null?v.f:(v.v!=null?v.v:'')).trim(); }
 
 async function muatMasterLive(){
   var d = await jsonp(TAB_MASTER.nama);
   if(!punya(cols(d), TAB_MASTER.wajib)) throw new Error('tab Master tidak dikenali');
+  /* urutan lama: Nama | Harga | Stok. Urutan baru: Nama | Kode Barang | Harga | Stok */
+  var kk = kolom(cols(d), 'Kode Barang', -1);
+  var ih = kk > -1 ? kk + 1 : 1, is = kk > -1 ? kk + 2 : 2;
   return (d.table.rows||[]).map(function(r){
     var c=r.c||[];
-    var h=c[1]&&c[1].v!=null?Number(c[1].v):null;
-    var s=c[2]&&c[2].v!=null?Number(c[2].v):null;
+    var h=c[ih]&&c[ih].v!=null?Number(c[ih].v):null;
+    var s=c[is]&&c[is].v!=null?Number(c[is].v):null;
     return { nama: teks(c,0), harga: (h===null||isNaN(h))?null:h, stok: (s===null||isNaN(s))?null:s };
   }).filter(function(x){ return x.nama; });
 }
@@ -379,11 +388,13 @@ async function muatJualLive(){
       var rr=d.table.rows||[], tanda=rr.length+'|'+JSON.stringify(rr[0])+'|'+JSON.stringify(rr[rr.length-1]);
       if(sudah[tanda]) continue;
       sudah[tanda]=1;
+      /* kolom Jumlah & Metode dicari lewat header, supaya aman walau ada kolom Kode Barang */
+      var lb=cols(d), ij=kolom(lb,'Jumlah',4), im=kolom(lb,'Metode',5);
       (d.table.rows||[]).forEach(function(r){
         var c=r.c||[];
         var no=teks(c,0), iso=keIso(teks(c,1)), jam=teks(c,2), br=teks(c,3);
-        var jl=c[4]?Number(c[4].v):0;
-        var mt=teks(c,5);
+        var jl=c[ij]?Number(c[ij].v):0;
+        var mt=teks(c,im);
         if(!br||!iso||!(jl>0)) return;
         semua.push({ no:no, iso:iso, jam:jam, barang:br, jumlah:jl,
                      metode: (mt? (mt.toUpperCase().indexOf('QRIS')>-1?'QRIS':'Tunai') : '') , tab:t.nama });
